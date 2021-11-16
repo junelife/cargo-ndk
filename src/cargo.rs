@@ -58,13 +58,7 @@ fn toolchain_suffix(triple: &str, arch: &str, bin: &str) -> PathBuf {
 }
 
 fn sysroot_suffix(arch: &str) -> PathBuf {
-    [
-        "toolchains",
-        "llvm",
-        "prebuilt",
-        arch,
-        "sysroot"
-    ]
+    ["toolchains", "llvm", "prebuilt", arch, "sysroot"]
         .iter()
         .collect()
 }
@@ -83,10 +77,13 @@ pub(crate) fn run(
     no_bindgen_env_vars: bool,
     no_cpp_libs: bool,
 ) -> std::process::ExitStatus {
-    let target_ar = Path::new(&ndk_home).join(toolchain_suffix(triple, ARCH, "ar"));
-    let target_linker = Path::new(&ndk_home).join(clang_suffix(triple, ARCH, platform, ""));
-    let target_cxx = Path::new(&ndk_home).join(clang_suffix(triple, ARCH, platform, "++"));
-    let target_sysroot = Path::new(&ndk_home).join(sysroot_suffix(ARCH));
+    let mut target_ar = ndk_home.join(toolchain_suffix(triple, ARCH, "ar"));
+    if !target_ar.exists() {
+        target_ar = ndk_home.join("llvm-ar");
+    }
+    let target_linker = ndk_home.join(clang_suffix(triple, ARCH, platform, ""));
+    let target_cxx = ndk_home.join(clang_suffix(triple, ARCH, platform, "++"));
+    let target_sysroot = ndk_home.join(sysroot_suffix(ARCH));
     let target_rustflags = "-lc++_static -lc++abi -lz";
 
     let cc_key = format!("CC_{}", &triple);
@@ -100,8 +97,16 @@ pub(crate) fn run(
     log::debug!("{}={}", &ar_key, &target_ar.display());
     log::debug!("{}={}", &cc_key, &target_linker.display());
     log::debug!("{}={}", &cxx_key, &target_cxx.display());
-    log::debug!("{}={}", cargo_env_target_cfg(&triple, "ar"), &target_ar.display());
-    log::debug!("{}={}", cargo_env_target_cfg(&triple, "linker"), &target_linker.display());
+    log::debug!(
+        "{}={}",
+        cargo_env_target_cfg(&triple, "ar"),
+        &target_ar.display()
+    );
+    log::debug!(
+        "{}={}",
+        cargo_env_target_cfg(&triple, "linker"),
+        &target_linker.display()
+    );
     log::debug!("{}={}", &bindgen_clang_args_key, &target_sysroot.display());
     log::debug!("Args: {:?}", &cargo_args);
 
@@ -116,7 +121,10 @@ pub(crate) fn run(
         .args(cargo_args);
 
     if !no_bindgen_env_vars {
-        cargo_cmd.env(bindgen_clang_args_key, format!("--sysroot={}", &target_sysroot.display()));
+        cargo_cmd.env(
+            bindgen_clang_args_key,
+            format!("--sysroot={}", &target_sysroot.display()),
+        );
     }
 
     if !no_cpp_libs {
