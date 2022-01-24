@@ -81,15 +81,18 @@ pub(crate) fn run(
     cargo_args: &[String],
     cargo_manifest: &Path,
     no_bindgen_env_vars: bool,
+    no_cpp_libs: bool,
 ) -> std::process::ExitStatus {
     let target_ar = Path::new(&ndk_home).join(toolchain_suffix(triple, ARCH, "ar"));
     let target_linker = Path::new(&ndk_home).join(clang_suffix(triple, ARCH, platform, ""));
     let target_cxx = Path::new(&ndk_home).join(clang_suffix(triple, ARCH, platform, "++"));
     let target_sysroot = Path::new(&ndk_home).join(sysroot_suffix(ARCH));
+    let target_rustflags = "-lc++_static -lc++abi -lz";
 
     let cc_key = format!("CC_{}", &triple);
     let ar_key = format!("AR_{}", &triple);
     let cxx_key = format!("CXX_{}", &triple);
+    let rustflags_key = "RUSTFLAGS";
     let bindgen_clang_args_key = format!("BINDGEN_EXTRA_CLANG_ARGS_{}", &triple);
     let cargo_bin = std::env::var("CARGO").unwrap_or_else(|_| "cargo".into());
 
@@ -114,6 +117,10 @@ pub(crate) fn run(
 
     if !no_bindgen_env_vars {
         cargo_cmd.env(bindgen_clang_args_key, format!("--sysroot={}", &target_sysroot.display()));
+    }
+
+    if !no_cpp_libs {
+        cargo_cmd.env(rustflags_key, &target_rustflags);
     }
 
     match dir.parent() {

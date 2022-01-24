@@ -55,6 +55,13 @@ struct Args {
         default = "false"
     )]
     no_bindgen_env_vars: bool,
+
+    #[options(
+        no_short,
+        help = "disable linking c++_static and c++abi to an output binary",
+        default = "false"
+    )]
+    no_cpp_libs: bool,
 }
 
 fn highest_version_ndk_in_path(ndk_dir: &Path) -> Option<PathBuf> {
@@ -222,6 +229,7 @@ pub(crate) fn run(args: Vec<String>) {
         );
         std::env::set_var("CARGO_NDK_ANDROID_TARGET", target.to_string());
 
+
         let status = crate::cargo::run(
             &working_dir,
             &ndk_home,
@@ -230,6 +238,7 @@ pub(crate) fn run(args: Vec<String>) {
             &args.cargo_args,
             cargo_manifest,
             args.no_bindgen_env_vars,
+            args.no_cpp_libs,
         );
         let code = status.code().unwrap_or(-1);
 
