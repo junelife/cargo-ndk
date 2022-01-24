@@ -6,7 +6,9 @@ for Android from a Rust codebase, with support for generating the correct `jniLi
 ## Installing
 
 ```
-cargo install cargo-ndk
+git clone git@github.com:junelife/cargo-ndk.git
+cd cargo-ndk
+cargo install --path .
 ```
 
 You'll also need to install all the toolchains you intend to use. Simplest way is with the following:
@@ -58,5 +60,3 @@ This project is licensed under either of
 at your option.
 
 ---
-
-[Uyghurs are under attack in Xinjiang.](https://foreignpolicy.com/2019/12/30/xinjiang-crackdown-uighur-2019-what-happened/) The Chinese government is placing millions of people into indoctrination camps and engaging in forced labour.
